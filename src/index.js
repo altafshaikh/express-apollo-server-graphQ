@@ -7,8 +7,11 @@ const path = require("path");
 const resolvers = {
   Query: {
     info: () => `This is the API of a Hackernews Clone`,
-    feed: () => links,
-    link: (parent, args) => links.find((link) => link.id === args.id),
+    feed: async (parent, args, context) => {
+      return context.prisma.link.findMany();
+    },
+    link: async (parent, args, context) =>
+      context.prisma.link.findFirst({ where: { id: parseInt(args.id) } }),
   },
   Link: {
     id: (parent) => parent.id,
@@ -16,26 +19,22 @@ const resolvers = {
     url: (parent) => parent.url,
   },
   Mutation: {
-    post: (parent, args) => {
-      const link = {
-        id: `link-${idCount++}`,
-        description: args.description,
-        url: args.url,
-      };
-      links.push(link);
-      return link;
+    post: (parent, args, context, info) => {
+      return context.prisma.link.create({
+        data: {
+          url: args.url,
+          description: args.description,
+        },
+      });
     },
-    updateLink: (parent, args) => {
-      let link = links.find((l) => l.id === id);
-      link.description = args.description;
-      link.url = args.url;
-      return link;
+    updateLink: async (parent, args, context) => {
+      return context.prisma.link.update({
+        where: { id: parseInt(args.id) },
+        data: { description: args.description, url: args.url },
+      });
     },
-    deleteLink: (parent, args) => {
-      const index = links.findIndex((l) => l.id === args.id);
-      const link = links[index];
-      links.splice(index, 1);
-      return link;
+    deleteLink: async (parent, args, context) => {
+      return context.prisma.link.delete({ where: { id: parseInt(args.id) } });
     },
   },
 };
