@@ -1,4 +1,5 @@
 const { ApolloServer } = require("apollo-server");
+const { PrismaClient } = require("@prisma/client");
 
 const fs = require("fs");
 const path = require("path");
@@ -13,7 +14,6 @@ let links = [
 
 let idCount = links.length;
 
-// 2
 const resolvers = {
   Query: {
     info: () => `This is the API of a Hackernews Clone`,
@@ -50,10 +50,14 @@ const resolvers = {
   },
 };
 
-// 3
+const prisma = new PrismaClient();
+
 const server = new ApolloServer({
   typeDefs: fs.readFileSync(path.join(__dirname, "schema.graphql"), "utf8"),
   resolvers,
+  context: {
+    prisma,
+  },
 });
 
 server.listen().then(({ url }) => console.log(`Server is running on ${url}`));
